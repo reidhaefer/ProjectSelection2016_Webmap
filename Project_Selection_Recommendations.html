@@ -1,0 +1,811 @@
+<html>
+<!DOCTYPE html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+<title>2016 Project Selection Resource Map</title>
+<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/dojo/dijit/themes/claro/claro.css" />
+<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/esri/css/esri.css" />
+<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open Sans">
+
+<style type="text/css">
+    html, body {
+        height:100%;
+        width:100%;
+        margin:0;
+        padding:0;
+        margin:0;
+        font-family: "Open Sans";
+    }
+    #rightPane {
+        width:300px;
+        margin:0;
+		padding-top: 10px;
+		font-size: 14px;
+         border-style: solid;
+		border-width: 3px;
+		border-color:#190707;
+        /*background-color:#E8E8E8;*/;
+		font-family: "Franklin Gothic Medium";
+    }
+   
+	 #map {
+        padding:0;
+        border-style: solid;
+		border-width: 3px;
+		border-color:#190707;
+		
+		Background-color: #190707;
+		font-family: "Franklin Gothic Medium";
+		font-size: 19px;
+    }
+    #comboBox {
+        padding-left: 5px;
+		padding-bottom: 5px
+		
+    }
+	#BasemapToggle {
+		position: absolute;
+		top: 138px;
+		left: 95px;
+		z-index: 50;
+	  }
+	#HomeButton {
+		position: absolute;
+		top: 169px;
+		left: 190px;
+		z-index: 50;
+      }
+	
+    #header {
+        text-align: Center;
+		font-size: 35px;
+		font-family: Rockwell, "Courier Bold", Courier, Georgia, Times, "Times New Roman", serif;
+        height:60px;
+		border:none ;
+        Background-color: #00A7A0;
+		color: white;
+	text-shadow:
+       1px 1px 0 #000,
+     -1px -1px 0 #000,  
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+       1px 1px 0 #000;
+   
+	
+		}
+	.ajax-loader {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -32px; /* -1 * image width / 2 */
+    margin-top: -32px;  /* -1 * image height / 2 */
+    display: block;     
+	}
+
+</style>
+    
+<script src="http://js.arcgis.com/3.8/"></script>
+<script>
+    require([
+    "dojo/ready",
+    "dojo/on",
+	"esri/dijit/PopupTemplate",
+    "dojo/_base/connect",
+    "dojo/dom",
+    "dijit/registry",
+    "dojo/dom-construct",
+    "dojo/parser",
+    "dijit/layout/BorderContainer",
+    "dijit/layout/ContentPane",
+    "esri/map",
+    "esri/dijit/BasemapToggle",
+    "esri/dijit/HomeButton",
+    "esri/arcgis/utils",
+    "esri/domUtils",
+    "esri/dijit/Popup",
+    "esri/layers/FeatureLayer",
+    "esri/graphic",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/renderers/SimpleRenderer",
+    "dojo/_base/Color",
+    "esri/InfoTemplate",
+    "esri/dijit/Legend",
+    "dijit/form/CheckBox",
+    "dijit/layout/AccordionContainer",
+    "esri/tasks/query",
+    "dijit/form/ComboBox",
+    "dojo/data/ItemFileReadStore",
+    "dojo/store/Memory",
+    "esri/tasks/FindTask",
+    "esri/tasks/FindParameters",
+    "dijit/Tooltip",
+    "dojox/grid/DataGrid",
+    "esri/tasks/RelationshipQuery",
+    "esri/config",
+    "esri/request",
+	"dijit/form/Button",
+	"dijit/Dialog",
+	"dijit/layout/TabContainer",
+    "esri/dijit/PopupTemplate"
+], function(
+    ready,
+    on,
+	PopupTemplate,
+    connect,
+    dom,
+    registry,
+    domConstruct,
+    parser,
+    BorderContainer,
+    ContentPane,
+    Map,
+    BasemapToggle,
+    HomeButton,
+    arcgisUtils,
+    domUtils,
+    Popup,
+    FeatureLayer,
+    Graphic,
+    SimpleLineSymbol,
+    SimpleRenderer,
+    Color,
+    InfoTemplate,
+    Legend,
+    CheckBox,
+    AccordionContainer,
+    query,
+    ComboBox,
+    ItemFileReadStore,
+    Memory,
+    FindTask,
+    FindParameters,
+    Tooltip,
+    DataGrid,
+    RelationshipQuery,
+    esriConfig,
+    esriRequest,
+	Button, 
+	Dialog,
+	TabContainer,
+    PopupTemplate
+) {
+    ready(function() {
+	
+        parser.parse();
+		
+		//dijit.byId('BorderContainer').removeChild(dijit.byId('bottomPane')); 
+		//dojo.style(dijit.byId("bottomPane").domNode, "display", "hide"); 
+        	//get a reference to the element
+		var myBtn = document.getElementById('myBtn');
+		
+		//get a reference to the element
+		//dijit.byId("dialogOne").show();
+		
+		var loading = dojo.byId("loadingImg");
+		
+        var legendLayers = [];
+        var map = new Map("map", {
+            basemap: "gray",
+            center: [-122.2, 47.5],
+            //center : [-85.915,38.105],
+            zoom: 9,
+			minZoom: 8,
+			logo: false
+        });
+		
+		var urlArray = new Array();
+		urlArray["Regional FHWA"] = "http://www.psrc.org/funding/selection/fhwa-fta-project-selection/regional-fhwa-applications/";
+		urlArray["Snohomish Countywide"] = "http://www.psrc.org/funding/selection/fhwa-fta-project-selection/snohomish-countys-2016-countywide-competition/";
+		urlArray["King Countywide"] = "http://www.psrc.org/funding/selection/fhwa-fta-project-selection/king-county-2016-countywide-competition/";
+		urlArray["Pierce Countywide"] = "http://www.psrc.org/funding/selection/fhwa-fta-project-selection/pierce-county-2016-countywide-competition/";
+		urlArray["Kitsap Countywide"] = "http://www.psrc.org/funding/selection/fhwa-fta-project-selection/kitsap-county-2016-countywide-competition/";
+		
+		var relateArray = new Array();
+		relateArray["City of Seattle"] = "<b>City of Seattle </b> <br><br> <font color=#F05A28>Monorail System Maintenance:</font> <br>$171,013<br>Preservation Set Aside<br><br><font color=#F05A28>Monorail System Maintenance:</font> <br> $2,841,750 <br>Earned Share<br><br><font color=#F05A28>South Lake Union Streetcar Maintenance:</font> <br> $1,290,318 <br>Earned Share ";
+		relateArray["Community Transit"] = "<b>Community Transit</b> <br><br><font color=#F05A28>Facilities Rehabilitation and Maintenance:</font> <br>$1,769,268<br>Preservation Set Aside <br><br><font color=#F05A28>Transit Revenue Vehicles:</font> <br> $23,547,732 <br> Earned Share <br><br><font color=#F05A28>Transit Operations:</font> <br> $3,900,000 <br>Earned Share <br> <br><font color=#F05A28>Transit Revenue Vehicles:</font> <br> $647,232 <br>Earned Share<br><br><font color=#F05A28>Preventive Maintenance Capital Operating:</font> <br> $1,943,970 <br>Earned Share ";
+		relateArray["Everett Transit"] = "<b>Everett Transit</b> <br><br><font color=#F05A28>  Everett Transit Preventive Maintenance for Vehicle Fleet: </font><br> $192,897<br>Preservation Set Aside<br><br><font color=#F05A28>Everett Station Preventive Maintenance and Rehabilitation: </font><br> $3,846,894<br>Earned Share<br><br><font color=#F05A28>Transit Revenue Vehicles: </font><br> $286,593<br>Earned Share ";
+		relateArray["King County Ferry District"] = "<b>King County Ferry District </b> <br><br><font color=#F05A28>Seattle Central Waterfront Regional Passenger-Only Ferry Terminal:</font> <br> $385,038<br>Preservation Set Aside <br><br><font color=#F05A28>Seattle Central Waterfront Regional Passenger-Only Ferry Terminal: </font><br> $2,771,997<br>Earned Share<br><br><font color=#F05A28>King County Ferry District Vessel Maintenance Project: </font><br> $2,352,459<br>Earned Share  ";
+		relateArray["King County Metro"] = " <b>King County Metro</b> <br><br><font color=#F05A28>Vehicle, Equipment and Facilities Maintenance:</font> <br>$15,382,947<br>Preservation Set Aside <br><br><font color=#F05A28>Vehicle, Equipment and Facilities Maintenance:</font> <br> $43,744,702<br> Earned Share <br><br> <font color=#F05A28> Trolley Pole Replacement:</font> <br> $2,400,000<br> Earned Share <br><br><font color=#F05A28> Bus Replacements:</font> <br> $108,847,493<br> Earned Share <br><br><font color=#F05A28> TBD </font><br>  $49,744,511<br> Earned Share";
+		relateArray["Kitsap Transit"] = "<b>Kitsap Transit</b> <br><br><font color=#F05A28>South Base:</font> <br> $270,861<br>Earned Share <br><br><font color=#F05A28>Bus and Over-the Road Coach Purchase:</font> <br>$9,956,361<br>Earned Share <br><br> <font color=#F05A28>Passenger Only Ferry System Preventive Maintenance:</font> <br> $697,749<br>Earned Share <br><br> <font color=#F05A28>North Kitsap Base:</font> <br> $270,861<br>Earned Share";
+		relateArray["Pierce Transit"] = " <b>Pierce Transit</b> <br><br><font color=#F05A28>Clean Fuels Bus Replacement/Expansion:</font> <br> $1,575,795<br>Preservation Set Aside <br><br><font color=#F05A28> Clean Fuels Bus Replacement/Expansion: </font><br> $15,653,181<br> Earned Share<br><br><font color=#F05A28> Preventive Maintenance: </font><br> $6,679,414<br> Earned Share";
+		relateArray["Sound Transit"] = "<b>Sound Transit</b> <br><br><font color=#F05A28>Regional Express Bus Program:</font> <br> $8,411,991<br>Preservation Set Aside <br><br><font color=#F05A28> Regional Express Bus Program:</font> <br>$19,968,276<br> Earned Share<br><br><font color=#F05A28> Northgate Link (UW Station to Northgate):</font> <br> $59,147,040<br> Earned Share <br><br><font color=#F05A28>Sounder and Link State of Good Repair:</font> <br>$32,842,614 <br> Earned Share ";
+		relateArray["Washington State Ferries"] = "<b>Washington State Ferries</b> <br><br><font color=#F05A28>Vessel Preservation and Improvement:</font> <br> $2,421,798<br>Preservation Set Aside <br><br> <font color=#F05A28>Vessel Preservation and Improvement:</font> <br> $32,232,561<br> Earned Share "
+;
+
+		dojo.connect(map,"onUpdateStart",showLoading); 
+        dojo.connect(map,"onUpdateEnd",hideLoading); 
+		
+        var toggle = new BasemapToggle({
+            map: map,
+            basemap: "satellite"
+        }, "BasemapToggle");
+        toggle.startup()
+        var home = new HomeButton({
+            map: map
+        }, "HomeButton");
+        home.startup();
+        map.infoWindow.set("popupWindow", true);
+        
+         var RGCone = new InfoTemplate();
+        RGCone.setTitle("Regional Growth Center");
+        RGCone.setContent(getTextContent2);
+        function getTextContent2(graphic) {
+			var RGCone = graphic.attributes.NAME;
+            return "<b>" 
+			  + RGCone + "<br>"	
+     
+        }
+		
+         var projects1 = new InfoTemplate();
+		 projects1.setTitle("Request for Funding");
+        projects1.setContent(getTextContent45);
+        function getTextContent45(graphic) {
+			var projectsone = graphic.attributes.Project_ti;
+			var projectstwo = graphic.attributes.Sponsoring;
+			var projectsthree = graphic.attributes.Total_Requ;
+			var projectsfour = graphic.attributes.Project_ty;
+			var projectsfive = graphic.attributes.Competitio;
+			var projectssix = graphic.attributes.Completion;
+			var projectsseven = graphic.attributes.both_phase;
+			var projectseight = graphic.attributes.nonmap1;
+			var myUrl = urlArray[projectsfive] ;
+          return "<b>" 
+			  + projectsone + "</b>" +"<br>"  +"<font color=#A4A4A4>Sponsor:</font> "+ 
+			    projectstwo + "<br>"  + "<font color=#A4A4A4>Request:</font> " + 
+				"$" + projectsthree.toLocaleString()  + "<br>" + "<font color=#A4A4A4>Forum:</font> " + 
+			    projectsfive +"<br>" + "<font color=#A4A4A4>Project Type:</font> " +
+			    projectsfour + "<br>" + "<font color=#A4A4A4>Phase(s): </font>" + 
+			    projectsseven + "<br>"  + "<font color=#A4A4A4>Completion Year:</font> " +
+			    projectssix + "<br>"  + " <font color=#A4A4A4> Mapped to Scale: </font>" + 
+			    projectseight + "<br>" + "</b><a target='_blank' href=" + myUrl + ">Link to Applications</a>";
+				
+			}
+			
+  var projects4 = new InfoTemplate();
+		 projects4.setTitle("Recommended for Funding");
+        projects4.setContent(getTextContent78);
+        function getTextContent78(graphic) {
+			var projectsone = graphic.attributes.Project_ti;
+			var projectstwo = graphic.attributes.Sponsoring;
+			var projectsthree = graphic.attributes.amount;
+			var projectsnine = graphic.attributes.Project_ty;
+			var projectsfour = graphic.attributes.Title;
+			var projectssix = graphic.attributes.Completion;
+			var projectsfive = graphic.attributes.Competitio;
+			var projectsseven = graphic.attributes.phase;
+			var projectseight = graphic.attributes.nonmap1;
+			var projectseleven = graphic.attributes.Benefits;
+			var myUrl = urlArray[projectsfive] ;
+          return "<b>" 
+			  + projectsone + "</b>" +"<br>"  +
+			  "<font color=#F05A28>Sponsor:</font> "+ projectstwo + "<br>"  + 
+				"<font color=#F05A28>Recommendation:</font> " + "$" + projectsthree.toLocaleString()  + "<br>" +
+				"<font color=#F05A28>Forum:</font> " + projectsfive +"<br>" +
+				"<font color=#F05A28>Project Type:</font> "+ projectsnine + "<br>" + 
+				"<font color=#F05A28>Phase(s): </font>"  +projectsseven + "<br>" +
+				"<font color=#F05A28>Completion year: </font>"  +projectssix + "<br>" +
+				"<font color=#F05A28>Mapped to Scale: </font>"  +projectseight + "<br>" + 
+				"<font color=#F05A28>Project Benefit: </font>"  + projectseleven + "<br>" + 
+				"</b><a target='_blank' href=" + myUrl + ">Link to Applications</a>"
+				;
+			   
+				
+			}
+			var fta1 = new InfoTemplate();
+				fta1.setTitle("Request for FTA Funds");
+				fta1.setContent(getTextContent99);
+				function getTextContent99(graphic) {
+			var id = graphic.attributes.name;
+			var info = relateArray[id] ;
+            return info + "<br>"
+			
+			//var fta1 = new PopupTemplate({
+				//"description":  "<br>fasdfsdf <br> asdgsdga ",
+				//"title": "{name} Projects"
+			 // })
+		}
+		var Min = new InfoTemplate();
+        Min.setTitle("Percent Minority Population");
+        Min.setContent(getTextContent3);
+        function getTextContent3(graphic) {
+			var MinCat = graphic.attributes.perc_2;
+            return "<b>" 
+			  + Math.round(MinCat) +"%" + "<br>"+"<br>"+ "Percent of the total population in this census tract (2010)" 	
+        }
+		
+		var fed = new InfoTemplate();
+        fed.setTitle("Federal Urban Area");
+        fed.setContent(getTextContent13);
+        function getTextContent13(graphic) {
+			var fedCat = graphic.attributes.NAME;
+            return "<b>" 
+			   "<br>"	
+        }
+
+		var opp = new InfoTemplate();
+        opp.setTitle("Opportunity Index");
+        opp.setContent(getTextContent4);
+        function getTextContent4(graphic) {
+			var oppin = graphic.attributes.COMP_INDEX;
+            return "<b>" 
+			  + oppin + "<br>"	
+        }
+	  var hic = new InfoTemplate();
+        hic.setTitle("Highly Impacted Community");
+        hic.setContent(getTextContent5);
+        function getTextContent5(graphic) {
+			var hic = graphic.attributes.Name;
+            return "<b>" 
+			   + "Top 10% highly impacted community in this census block" +"<br>"	
+        }
+		 var eld = new InfoTemplate();
+        eld.setTitle("Elderly Population");
+        eld.setContent(getTextContent6);
+        function getTextContent6(graphic) {
+			var eld = graphic.attributes.perc;
+            return "<b>" 
+			  + Math.round(eld) +"%" + "<br>"+"<br>"+ "Percent of the total population in this census tract (2010)" 	
+        }
+		
+		var MIC = new InfoTemplate();
+        MIC.setTitle("Manufacturing/Industrial Center");
+        MIC.setContent(getTextContent7);
+        function getTextContent7(graphic) {
+			var MIC = graphic.attributes.MIC;
+            return "<b>" 
+			  + MIC + "<br>"	
+        }
+		
+		var pov_info_template = new InfoTemplate();
+        pov_info_template.setTitle("Poverty (Households)");
+        pov_info_template.setContent(getTextContent8);
+        function getTextContent8(graphic) {
+            console.log(graphic.attributes);
+			var pov = graphic.attributes.perc;
+            return "<b>" 
+			 + Math.round(pov) + "%" +"<br>"+"<br>"+ "Percent of all households in this census tract (2010)" 
+        
+        }
+		
+			var dis = new InfoTemplate();
+        dis.setTitle("Disabled Population");
+        dis.setContent(getTextContent18);
+        function getTextContent18(graphic) {
+            console.log(graphic.attributes);
+			var dis1 = graphic.attributes.perc;
+            return "<b>" 
+			 + Math.round(dis1) + "%" +"<br>"+"<br>"+ "Percent of the total population in this census tract (2010)" 
+        
+        }
+		
+		var freight_var = new InfoTemplate();
+        freight_var.setTitle("Freight Route");
+        freight_var.setContent(getTextContent19);
+        function getTextContent19(graphic) {
+			var freight_var = graphic.attributes.FGTSClass;
+            return "<b>" 
+			 + freight_var + "<br>"	
+        
+        }
+        
+           //Minority
+        var minEJ = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/minority/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: Min
+            }); 
+        legendLayers.push({layer:minEJ,title:"Minority Population"});
+		  
+		  //Fed Urban Area
+        var fedurb = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/fed_area_2/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+			infoTemplate: fed
+            }); 
+        legendLayers.push({layer:fedurb,title:"Federal Urban Area"});
+		   
+		   //Highly Impact Communities
+        var HIC = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/highly_impacted/MapServer/1",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: hic
+            }); 
+        legendLayers.push({layer:HIC,title:"Highly Impacted Communities"});
+		
+        //Opportunity 
+		 var opportunity = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/opportunity_2/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: opp
+            }); 
+        legendLayers.push({layer:opportunity,title:"Opportunity Index"});
+		
+		 //Elderly
+		 var eld = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/elderly/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: eld
+            }); 
+        legendLayers.push({layer:eld,title:"Elderly Population"});
+
+		 //Regional Growth Centers
+		 var RGC = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/RGC/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+             outFields: ["*"],
+            infoTemplate: RGCone
+            }); 
+        
+        legendLayers.push({layer:RGC,title:"Regional Growth Centers"});
+
+		 //freight
+		 var freight = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/freight_t1_t2/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: freight_var
+            }); 
+        legendLayers.push({layer:freight,title:"Freight Routes"});
+		
+		//MIC
+		 var MIC = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/MIC_2/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+            outFields: ["*"],
+            infoTemplate: MIC
+            }); 
+        legendLayers.push({layer:MIC,title:"Manufacturing/Industrial Centers"});
+		
+           //Poverty
+        var povEJ = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/poverty/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: pov_info_template
+            });    
+        legendLayers.push({layer:povEJ,title:"Poverty"});
+		   //Disabled
+        var disab = new FeatureLayer("http://webmap.psrc.org/arcgis/rest/services/TIP/disabled/MapServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: dis
+            });    
+        legendLayers.push({layer:disab,title:"Disabled Population"});
+
+        dojo.connect(map, 'onLayersAddResult', function(results) {
+		console.log('fired!!!');
+            var legend = new esri.dijit.Legend({
+                map: map,
+                layerInfos: legendLayers
+            }, "legendDiv");
+            legend.startup();
+        });
+         //FTA
+        var fta = new FeatureLayer("http://services6.arcgis.com/GWxg6t7KXELn1thE/arcgis/rest/services/fta_earned_share_2016_awards/FeatureServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+			infoTemplate: fta1
+            });    
+ 
+	legendLayers.push({layer:fta,title:"FTA Projects"});
+	
+     var projects = new FeatureLayer("http://services6.arcgis.com/GWxg6t7KXELn1thE/arcgis/rest/services/all_project_selection_applications_2016/FeatureServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: projects1
+           }); 
+        legendLayers.push({layer:projects,title:"FHWA Funding Requests"});
+
+      var projects2 = new FeatureLayer("http://services6.arcgis.com/GWxg6t7KXELn1thE/arcgis/rest/services/recommended_projects_2016_fhwa/FeatureServer/0",
+        {
+            mode:FeatureLayer.MODE_ONDEMAND,
+			outFields: ["*"],
+            infoTemplate: projects4
+           }); 
+        legendLayers.push({layer:projects2, title: "FHWA Funding Recommendations "});
+
+		layerList = [];
+		
+		dojo.forEach(legendLayers, function(layer) {
+			layerList.push(layer.layer);
+        });
+		map.addLayers(layerList);
+		map.addLayer(fta);
+		map.addLayer(projects);
+		map.addLayer(projects2);
+
+	  //but do not make them visible
+        dojo.forEach(layerList, function(layer) {
+            layer.hide();
+        });
+		
+		var layersOnList = [projects.id, projects2.id, fta.id];
+
+        //add check boxes  
+            console.log("here");
+            dojo.forEach(legendLayers, function(layer) {
+            var layerName = layer.title;
+            //console.log(layerName);
+            if (layerName != "cities"){
+            var checkBox = new dijit.form.CheckBox({
+                name: "checkBox" + layer.layer.id,
+                value: layer.layer.id,
+                checked: false,
+                onChange: function(evt) {
+                    var clayer = map.getLayer(this.value);
+                    clayer.setVisibility(!clayer.visible);
+                    this.checked = clayer.visible;
+                }
+            });
+			
+            //add the check box and label to the toc 
+            dojo.place(checkBox.domNode, dojo.byId("toggle"), "after");
+            var checkLabel = dojo.create('label', {
+                'for': checkBox.name,
+                innerHTML: layerName
+            }, checkBox.domNode, "after");
+            dojo.place("<br><br/>", checkLabel, "after");
+			
+			}
+        });
+		
+        dojo.forEach (dojo.query("input[type=checkbox]"), function(item){
+		var widget = dijit.getEnclosingWidget(item);
+		//console.log(widget.value);
+		//console.log(layersOnList);
+		if (containsObject(widget.value,layersOnList)){
+		//alert(widget)
+			//console.log(widget);
+			widget.set('checked', true);
+			}
+		})
+
+		//Code below populates the ComboBox with Project Titles
+        var queryTask = new esri.tasks.QueryTask("http://webmap.psrc.org/arcgis/rest/services/TIP/cities/MapServer/0");
+        //Define query parameters  
+        var query = new esri.tasks.Query();
+        query.outFields = ["CITYNAME"];
+		query.orderByFields = ["CITYNAME ASC"];
+        query.returnGeometry = false;
+        query.where = "CITYNAME <> ''"
+        queryTask.execute(query, populateList);
+        
+        function containsObject(obj, list) {
+			var i;
+			for (i = 0; i < list.length; i++) {
+				if (list[i] === obj) {
+				return true;
+				}
+			}
+
+			return false;
+			}
+		
+		function populateList(results) {
+			//console.log(results)
+            //Populate the dropdown list box with unique values  
+            var zone;
+            var values = [];
+            var testVals = {};
+            //Add option to display all zoning types to the dropdown list   
+            //values.push({
+            //   name: "ALL"
+            //})
+            var features = results.features;
+            dojo.forEach(features, function(feature) {
+                zone = feature.attributes.CITYNAME;
+                if (!testVals[zone]) {
+                    testVals[zone] = true;
+                    values.push({
+                        name: zone
+                    });
+                }
+            });
+			
+			values.sort();
+			
+            var dataItems = {
+                identifier: 'name',
+                label: 'name',
+                items: values
+            };
+			console.log(dataItems)
+            var store = new dojo.store.Memory({
+                data: dataItems
+            });
+            dijit.byId("mySelect").store = store;
+        }
+        // this replaces your applyLayerDef() function
+        test = dijit.byId("mySelect").on("change", function() {
+            //Filter the layer to display only the selected zoning types 
+            var findTask = new esri.tasks.FindTask("http://webmap.psrc.org/arcgis/rest/services/TIP/cities/MapServer/");
+            //Create the find parameters 
+            var findParams = new esri.tasks.FindParameters();
+            findParams.returnGeometry = true;
+            findParams.layerIds = [0];
+            findParams.searchFields = ["CITYNAME"];
+            findParams.outSpatialReference = map.spatialReference;
+            //Find and zoom to current project
+            var CITYNAME = dijit.byId("mySelect").value;
+            findParams.searchText = CITYNAME;
+            findTask.execute(findParams, selectFeatureAndZoom);
+        });
+        Tooltip.defaultPosition = ["below"];
+        Tooltip.show("this is a tool tip", test.domNode);
+        
+        function selectFeatureAndZoom(results) {
+            //This function works with an array of FindResult that the task returns 
+            map.graphics.clear();
+            //Symbol for Selected Feature 
+            var symbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new Color([255, 0, 0]), 4);
+            //Add Selected Feature to Map  
+            var items = dojo.map(results, function(result) {
+                var graphic = result.feature;
+               // graphic.setInfoTemplate(infoTemplate);
+                //var content2 = graphic.getContent()
+                //registry.byId("rightPane").set("content", content2);
+                graphic.setSymbol(symbol);
+                map.graphics.add(graphic);
+                return result.feature.attributes;
+            });
+            var selectedFeature;
+            var selectedFeatureExtent;
+            //loop through graphics, get the first one (there should only be one)
+            dojo.forEach(map.graphics.graphics, function(graphic) {
+                selectedFeature = graphic;
+                return;
+            });
+            selectedFeatureExtent = selectedFeature.geometry.getExtent();
+            selectedFeatureExtent = selectedFeatureExtent.expand(1.3);
+            map.setExtent(selectedFeatureExtent);
+			map.graphics.clear();
+			loadDataGrid(selectedFeature)
+        }
+        function resizeMap() {
+            //Handle browser resize  
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                map.resize();
+                map.reposition();
+            }, 800);
+        }
+		function showLoading() { 
+          esri.show(loading); 
+          map.disableMapNavigation(); 
+          map.hideZoomSlider(); 
+        } 
+ 
+        function hideLoading(error) { 
+          esri.hide(loading); 
+          map.enableMapNavigation(); 
+          map.showZoomSlider(); 
+         
+        } 
+
+        function loadDataGrid(projectGraphic) {
+            var relatedQuery = new RelationshipQuery();
+            relatedQuery.outFields = ["*"];
+            relatedQuery.relationshipId = 0;
+            graphicAttributes = projectGraphic.attributes;
+            relatedQuery.objectIds = [graphicAttributes.OBJECTID_12];
+            cities.queryRelatedFeatures(relatedQuery, function(relatedRecords) {
+                var fset = relatedRecords[graphicAttributes.OBJECTID_12];
+                var items = [];
+                for (var i = 0, il = fset.features.length; i < il; i++) {
+                    items.push(fset.features[i].attributes);
+                }
+ 
+            });
+        };
+    });
+});
+//this function must be outside the require function (AMD stuff) for the html to be able to call it
+function formatCost (Cost) { 	
+		//console.log(Cost);
+		//console.log("%s", "got here");
+		return "$" + Cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");     
+                }
+
+</script>
+
+	<script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ 
+		ga('create', 'UA-10500475-5', 'auto');
+		ga('send', 'pageview');
+ 
+	</script> 
+
+</head>
+
+<body class="claro">
+    <div id = "BorderContainer" data-dojo-type="dijit/layout/BorderContainer" data-dojo-props="gutters:true, design:'header'" style="width:100%;height:100%;">
+      <div data-dojo-type="dijit/layout/ContentPane"  id="header" data-dojo-props="region:'top'" ><b>PSRC 2016 PROJECT SELECTION MAP: <font color="white">PROJECTS RECOMMENDED FOR FUNDING</font></b> </div>
+     
+	
+	 <div id="map" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'center'">
+	   
+	   
+	<div id='comboBox'>
+	  <select id="mySelect"
+			
+             dojotype="dijit.form.ComboBox"  
+             style="width:480px;font-size:17px"  
+             autoComplete="true"  
+             forceValidOption="false" 
+             value="   Type in City Name Here or Browse by Clicking Down Arrow"></select>
+			 
+	 <button id="buttonOne" data-dojo-type="dijit.form.Button" style="font-size:17px; padding-left: 786px" type="button">More Information About Map Layers
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        // Show the Dialog:
+        dijit.byId("dialogOne").show();
+    </script>
+</button>
+	  </div>
+	  </div>
+	  <div id="BasemapToggle"></div>
+	  <div id="HomeButton"></div>
+  <div id="rightPane" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'right'"><b>HOW TO USE:</b><br/><br/>Access additional map layers by clicking the check boxes below. Once the map data is displayed, click the map for additional pop-up information. Legend info will be shown below. Zoom to the city level to view street names:</b><br/><br/>
+<div dojoType="dijit.layout.ContentPane"  title="Data Layers" selected="true"> 
+            <span style="padding:0px 0;"> </span> 
+            <div id="toggle" style="padding: 0px 0px;" ></div> 
+          </div> 
+          <div dojoType="dijit.layout.ContentPane"  id="legendPane" title="Legend" >  
+            <div id="legendDiv"></div> 
+          </div> 
+          
+                  </div>
+
+   <img id="loadingImg" src="/assets/14872/ajax-loader2.gif" style="position:absolute; right:50%; top:50%; z-index:100;" />
+   
+ <div id="dialogOne" data-dojo-type="dijit.Dialog" title="More Information About Map Layers">
+    <div data-dojo-type="dijit.layout.TabContainer" style="width: 650px; height: 575px; font-size:14px">
+        <div data-dojo-type="dijit.layout.ContentPane" title="<b>Data Information</b>">Below is a brief description of each data layer.<br/><br/>
+																	<u>Disabled Population</u><br/>
+																	This layer displays disabled populations as a percent of total population in each census tract. <br/><br/>
+																	<u>Elderly Population</u><br/>
+																	This layer displays elderly populations as a percent of total population in each census tract. Elderly is defined as 65 years of age and older.
+																	<br/><br/>
+																	<u>Freight Routes</u><br/>
+																	This layer displays all T1 and T2 freight routes. T1 freight routes are those that carry more than 10 million tons per year. T2 freight routes are those that carry 4 to 10 million tons per year. <br/><br/>
+																	<u>Poverty</u><br/>
+																	This layer displays concentrations of household poverty as a percent of all households in each census tract.  <br/><br/>
+																	<u>Minority Population</u><br/>
+																	This layer displays minority populations as a percent of total population in each census tract. <br/><br/>
+																	<u>Regional Growth Centers</u><br>
+																	This layer displays the designated Regional Growth Centers. More information on regional growth centers can be found here: <a href="http://www.psrc.org/growth/centers/"> http://www.psrc.org/growth/centers/.</a><br/><br/>
+																	<u>Manufacturing Industrial Centers</u><br/>
+																	This layer displays the designated regional Manufacturing and Industrial Centers. More information on manufacturing and industrial centers can be found here: <a href="http://www.psrc.org/growth/centers/"> http://www.psrc.org/growth/centers/.</a><br/><br/>
+																	<u>Opportunity Index</u><br/>
+																	This layer is a composite measure of five key elements of neighborhood opportunity at the census tract level: Education, Economic Health, Housing and Neighborhood Quality, Mobility and Transportation, and Health and Environment. More information on the opportunity index can be found here: <a href="http://www.psrc.org/growth/tod/growing-transit-communities-strategy/equity/opportunity-mapping/"> http://www.psrc.org/growth/tod/growing-transit-communities-strategy/equity/opportunity-mapping/.</a><br/><br/>
+																	<u>Highly Impacted Communities</u><br/>
+																	This layer displays the top 10% of highly impacted communities as identified by the Puget Sound Clean Air Agency. More information on the highly impacted communities can be found here: <a href="http://www.pscleanair.org/library/Documents/HI-C_Report_pscleanair_20150415.pdf"> http://www.pscleanair.org/library/Documents/HI-C_Report_pscleanair_20150415.pdf.</a><br/><br/>
+																	<u>Federal Urban Area</u><br/>
+																	This layer displays the federally designated urban boundary<br/><br/>
+																	
+																	
+																	
+																	</div>
+    </div>
+</div>
+
+   
+   </div>
+   
+   
+   
+</body>
+
+</html>
